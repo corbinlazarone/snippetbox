@@ -1,0 +1,53 @@
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"strconv"
+	"text/template"
+)
+
+func home(w http.ResponseWriter, r *http.Request) {
+	// only show home on / path
+	if r.URL.Path != "/" {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Read the template file into a template set
+	tmplSet, err := template.ParseFiles("./ui/html/pages/home.tmpl.html")
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		log.Println("ERROR: ", err)
+		return
+	}
+
+	// Read the template set into a response body
+	err = tmplSet.Execute(w, nil)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		log.Println("ERROR: ", err)
+		return
+	}
+}
+
+func snippetCreate(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.Header().Set("Allow", http.MethodPost)
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	w.Write([]byte("Snippet Create\n"))
+}
+
+func snippetView(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	if err != nil || id < 1 { // convert id to int and makes sure its greater than 1
+		http.NotFound(w, r)
+		log.Println("ERROR: ", err)
+		return
+	}
+
+	fmt.Fprintf(w, "Found snipped with id: %d\n", id)
+}
