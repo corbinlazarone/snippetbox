@@ -15,8 +15,14 @@ func home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	files := []string{
+		"./ui/html/base.tmpl.html", // first element must be our base template
+		"./ui/html/partials/nav.tmpl.html",
+		"./ui/html/pages/home.tmpl.html",
+	}
+
 	// Read the template file into a template set
-	tmplSet, err := template.ParseFiles("./ui/html/pages/home.tmpl.html")
+	tmplSet, err := template.ParseFiles(files...) // "files..." unpacks the slice so each element is passed individually
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		log.Println("ERROR: ", err)
@@ -24,7 +30,7 @@ func home(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Read the template set into a response body
-	err = tmplSet.Execute(w, nil)
+	err = tmplSet.ExecuteTemplate(w, "base", nil)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		log.Println("ERROR: ", err)
@@ -50,4 +56,8 @@ func snippetView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, "Found snipped with id: %d\n", id)
+}
+
+func serveStaticFiles(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Serving..\n"))
 }
