@@ -1,11 +1,17 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net/http"
 )
 
 func main() {
+
+	port := flag.String("port", ":4000", "HTTP server port number")
+
+	flag.Parse()
+
 	mux := http.NewServeMux()
 
 	// Use the mux.Handle() function to register the file server as the handler for
@@ -18,7 +24,7 @@ func main() {
 	mux.HandleFunc("/snippet/view", snippetView)
 	mux.HandleFunc("/snippet/create", snippetCreate)
 
-	log.Println("Server started on port :4000...")
-	err := http.ListenAndServe(":4000", mux)
+	log.Printf("Server running on %s...\n", *port)
+	err := http.ListenAndServe(*port, mux)
 	log.Fatal(err)
 }
