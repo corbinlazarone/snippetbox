@@ -11,7 +11,7 @@ import (
 // shared across our app.
 type application struct {
 	errLog  *log.Logger // field to introduce a custom error logger
-	infoLog *log.Logger // field to introduce a custom info logger
+	infoLog *log.Logger // field to introduce a custom info logger2
 }
 
 func main() {
@@ -28,20 +28,9 @@ func main() {
 		infoLog: infoLog,
 	}
 
-	mux := http.NewServeMux()
-	// Use the mux.Handle() function to register the file server as the handler for
-	// all URL paths that start with "/static/". For matching paths, we strip the
-	// "/static" prefix before the request reaches the file server.
-	fileServer := http.FileServer(http.Dir("./ui/static"))
-	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
-
-	mux.HandleFunc("/", app.home)
-	mux.HandleFunc("/snippet/view", app.snippetView)
-	mux.HandleFunc("/snippet/create", app.snippetCreate)
-
 	srv := &http.Server{
 		Addr:     *port,
-		Handler:  mux,
+		Handler:  app.routes(),
 		ErrorLog: errLog,
 	}
 
