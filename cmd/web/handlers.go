@@ -1,10 +1,13 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 	"text/template"
+
+	"github.com/corbinlazarone/snippetbox/internal/models"
 )
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
@@ -41,7 +44,17 @@ func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
 		app.clientError(w, http.StatusMethodNotAllowed)
 		return
 	}
-	w.Write([]byte("Snippet Create\n"))
+	title := "O snail"
+	content := "O snail\nClimb Mount Fuji,\nBut slowly, slowly!\n\n– Kobayashi Issa"
+	expires := 7
+	id, err := app.snippets.Insert(title, content, expires)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	// redirect the user to the relvant snippet id page
+	http.Redirect(w, r, fmt.Sprintf("/snippet/view?id=%d\n", id), http.StatusSeeOther)
 }
 
 func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
@@ -50,6 +63,14 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 		app.clientError(w, http.StatusNotFound)
 		return
 	}
-
-	fmt.Fprintf(w, "Found snipped with id: %d\n", id)
+	result, err := app.snippets.Get(id)
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			app.clientError(w, http.StatusNotFound)
+		} else {
+			app.serverError(w, err)
+		}
+		return
+	}
+	fmt.Fprintf(w, "%+v", result)
 }
