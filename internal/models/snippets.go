@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -13,7 +14,7 @@ type Snippet struct {
 	Title   string
 	Content string
 	Created time.Time
-	Expiers time.Time
+	Expires time.Time
 }
 
 // snippet model that wraps a postgres db connection
@@ -39,7 +40,7 @@ func (s *SnippetModel) Get(id int) (*Snippet, error) {
 								WHERE expires > NOW() AT TIME ZONE 'UTC' AND id = $1;`
 	newSnip := &Snippet{}
 	err := s.DB.QueryRow(context.Background(), statement, id).Scan(
-		&newSnip.ID, &newSnip.Title, &newSnip.Content, &newSnip.Created, &newSnip.Expiers,
+		&newSnip.ID, &newSnip.Title, &newSnip.Content, &newSnip.Created, &newSnip.Expires,
 	)
 	if err != nil {
 		return nil, ErrNoRecord
@@ -48,6 +49,16 @@ func (s *SnippetModel) Get(id int) (*Snippet, error) {
 }
 
 // get the 10 latest snippets created
-func (s *SnippetModel) Latest() (*[]Snippet, error) {
-	return nil, nil
+func (s *SnippetModel) Latest() ([]Snippet, error) {
+	statement := `SELECT id, title, content, created, expires FROM snippets
+								WHERE expires > NOW() at TIME zone 'UTC' order by id desc limit 10;`
+
+	rows, _ := s.DB.Query(context.Background(), statement)
+	res, err := pgx.CollectRows(rows, pgx.RowToStructByName[Snippet])
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }
