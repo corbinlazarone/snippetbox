@@ -74,7 +74,7 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 		app.clientError(w, http.StatusNotFound)
 		return
 	}
-	result, err := app.snippets.Get(id)
+	snippet, err := app.snippets.Get(id)
 	if err != nil {
 		if errors.Is(err, models.ErrNoRecord) {
 			app.clientError(w, http.StatusNotFound)
@@ -85,7 +85,7 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// fix new lines
-	result.Content = strings.ReplaceAll(result.Content, "\\n", "\n")
+	snippet.Content = strings.ReplaceAll(snippet.Content, "\\n", "\n")
 
 	// store our html pages in a slice
 	files := []string{
@@ -101,8 +101,13 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// use our templateData holding struct
+	data := &templateData{
+		Snippet: snippet,
+	}
+
 	// Execute our parsed template files
-	err = tmplSet.ExecuteTemplate(w, "base", result)
+	err = tmplSet.ExecuteTemplate(w, "base", data)
 	if err != nil {
 		app.serverError(w, err)
 	}
