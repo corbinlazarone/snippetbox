@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
+	"text/template"
 
 	"github.com/corbinlazarone/snippetbox/internal/models"
 )
@@ -81,5 +83,27 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	fmt.Fprintf(w, "%+v", result)
+
+	// fix new lines
+	result.Content = strings.ReplaceAll(result.Content, "\\n", "\n")
+
+	// store our html pages in a slice
+	files := []string{
+		"./ui/html/base.tmpl.html",
+		"./ui/html/partials/nav.tmpl.html",
+		"./ui/html/pages/view.tmpl.html",
+	}
+
+	// parse through our html files into a template set
+	tmplSet, err := template.ParseFiles(files...)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	// Execute our parsed template files
+	err = tmplSet.ExecuteTemplate(w, "base", result)
+	if err != nil {
+		app.serverError(w, err)
+	}
 }
