@@ -28,15 +28,20 @@ func newTemplateCache() (map[string]*template.Template, error) {
 		// name will be the last element of the path ex: home.tmpl.html
 		name := filepath.Base(page)
 
-		// create slice of our base and partial templates and our found page
-		files := []string{
-			"./ui/html/base.tmpl.html",
-			"./ui/html/partials/nav.tmpl.html",
-			page,
+		// parse our base template file
+		tmplSet, err := template.ParseFiles("./ui/html/base.tmpl.html")
+		if err != nil {
+			return nil, err
 		}
 
-		// parse that slice of files using html/tempalte package
-		tmplSet, err := template.ParseFiles(files...)
+		// parse all the partials template files b/c we will add more later
+		tmplSet, err = tmplSet.ParseGlob("./ui/html/partials/*.tmpl.html")
+		if err != nil {
+			return nil, err
+		}
+
+		// parse our page template
+		tmplSet, err = tmplSet.ParseFiles(page)
 		if err != nil {
 			return nil, err
 		}
