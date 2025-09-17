@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -14,9 +15,10 @@ import (
 // Struct to hold our resources that needs to be
 // shared across our app.
 type application struct {
-	errLog   *log.Logger          // field to introduce a custom error logger
-	infoLog  *log.Logger          // field to introduce a custom info logger
-	snippets *models.SnippetModel // used so our handlers.go can see out model
+	errLog        *log.Logger          // field to introduce a custom error logger
+	infoLog       *log.Logger          // field to introduce a custom info logger
+	snippets      *models.SnippetModel // used so our handlers.go can see out model
+	templateCache map[string]*template.Template
 }
 
 func main() {
@@ -32,6 +34,12 @@ func main() {
 	infoLog := log.New(os.Stdout, "INFO:\t", log.Ldate|log.Ltime|log.Lshortfile)
 	errLog := log.New(os.Stderr, "ERROR:\t", log.Ldate|log.Ltime|log.Lshortfile)
 
+	// initialize a new tempalte cache
+	templateCache, err := newTemplateCache()
+	if err != nil {
+		errLog.Fatal(err) // log the error with customer logger and kill the program
+	}
+
 	db, err := openDB(*datasource)
 	if err != nil {
 		errLog.Fatal(err)
@@ -45,6 +53,7 @@ func main() {
 		snippets: &models.SnippetModel{
 			DB: db,
 		},
+		templateCache: templateCache,
 	}
 
 	srv := &http.Server{

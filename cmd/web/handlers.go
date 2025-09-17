@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"text/template"
 
 	"github.com/corbinlazarone/snippetbox/internal/models"
 )
@@ -24,30 +23,13 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	files := []string{
-		"./ui/html/base.tmpl.html", // first element must be our base template
-		"./ui/html/partials/nav.tmpl.html",
-		"./ui/html/pages/home.tmpl.html",
-	}
-
-	// Read the template file into a template set
-	tmplSet, err := template.ParseFiles(files...) // "files..." unpacks the slice so each element is passed individually
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-
 	// use our templateData holding struct
 	data := &templateData{
 		Snippets: &snippets,
 	}
 
-	// Read the template set into a response body
-	err = tmplSet.ExecuteTemplate(w, "base", data)
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
+	// use render helper function to render our template page
+	app.render(w, "home.tmpl.html", data, http.StatusOK)
 }
 
 func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
@@ -88,29 +70,10 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	// fix new lines
 	snippet.Content = strings.ReplaceAll(snippet.Content, "\\n", "\n")
 
-	// store our html pages in a slice
-	files := []string{
-		"./ui/html/base.tmpl.html",
-		"./ui/html/partials/nav.tmpl.html",
-		"./ui/html/pages/view.tmpl.html",
-	}
-
-	// parse through our html files into a template set
-	tmplSet, err := template.ParseFiles(files...)
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-
 	// use our templateData holding struct
 	data := &templateData{
 		Snippet: snippet,
 	}
 
-	// Execute our parsed template files
-	err = tmplSet.ExecuteTemplate(w, "base", data)
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
+	app.render(w, "view.tmpl.html", data, http.StatusOK)
 }

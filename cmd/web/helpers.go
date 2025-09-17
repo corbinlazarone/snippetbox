@@ -6,6 +6,26 @@ import (
 	"runtime/debug"
 )
 
+func (app *application) render(w http.ResponseWriter, pageName string, data *templateData, statusCode int) {
+	tmplSet, ok := app.templateCache[pageName]
+
+	if !ok {
+		// the page tempalte is not in the map
+		err := fmt.Errorf("%s not found in template cache\n", pageName)
+		app.serverError(w, err)
+		return
+	}
+
+	// write out the provided statusCode
+	w.WriteHeader(statusCode)
+
+	err := tmplSet.ExecuteTemplate(w, "base", data)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+}
+
 func (app *application) serverError(w http.ResponseWriter, err error) {
 	// debug.Stack() returns the stack trace of the error.
 	msg := fmt.Sprintf("%s\n%s\n", err.Error(), debug.Stack())
