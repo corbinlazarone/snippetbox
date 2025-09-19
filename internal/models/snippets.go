@@ -35,6 +35,7 @@ func (s *SnippetModel) Insert(Title string, Content string, Expiers int) (int, e
 	return int(id), nil
 }
 
+// Get snippet by ID
 func (s *SnippetModel) Get(id int) (*Snippet, error) {
 	statement := `SELECT id, title, content, created, expires FROM snippets
 								WHERE expires > NOW() AT TIME ZONE 'UTC' AND id = $1;`

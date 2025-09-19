@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"runtime/debug"
@@ -16,14 +17,32 @@ func (app *application) render(w http.ResponseWriter, pageName string, data *tem
 		return
 	}
 
-	// write out the provided statusCode
-	w.WriteHeader(statusCode)
+	// Understanding the problem:
+	// --------------------------
+	// With our templates now handling dynamic data rendering,
+	// we need to handle runtime errors where the data may be null,
+	// and the tempalte doesn't render correctly.
+	// To do this we will first write the template to a temp buffer
+	// and if that is successful then we know that html template doesn't have
+	// any errors in it, therefor we can render the page to the user.
+	// if the write to the buffer fails we know their is an error, so
+	// we will show a server error to the user.
 
-	err := tmplSet.ExecuteTemplate(w, "base", data)
+	buf := new(bytes.Buffer)
+
+	// write the tempalte to the buffer instead of straight to
+	// the http.ResponseWriter
+	err := tmplSet.ExecuteTemplate(buf, "base", data)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
+
+	// write out the provided statusCode
+	w.WriteHeader(statusCode)
+
+	// write the contents of the buffer out
+	buf.WriteTo(w)
 }
 
 func (app *application) serverError(w http.ResponseWriter, err error) {
