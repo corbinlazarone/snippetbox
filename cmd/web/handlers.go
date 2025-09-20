@@ -24,9 +24,8 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// use our templateData holding struct
-	data := &templateData{
-		Snippets: &snippets,
-	}
+	data := newTemplateData()
+	data.Snippets = &snippets
 
 	// use render helper function to render our template page
 	app.render(w, "home.tmpl.html", data, http.StatusOK)
@@ -71,9 +70,8 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	snippet.Content = strings.ReplaceAll(snippet.Content, "\\n", "\n")
 
 	// use our templateData holding struct
-	data := &templateData{
-		Snippet: snippet,
-	}
+	data := newTemplateData()
+	data.Snippet = snippet
 
 	app.render(w, "view.tmpl.html", data, http.StatusOK)
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"html/template"
 	"path/filepath"
+	"time"
 
 	"github.com/corbinlazarone/snippetbox/internal/models"
 )
@@ -10,10 +11,17 @@ import (
 // templateData will act as a holding structure for
 // any dynamic data we want to pass to our html templates.
 type templateData struct {
-	Snippet  *models.Snippet
-	Snippets *[]models.Snippet
+	CurrentYear int
+	Snippet     *models.Snippet
+	Snippets    *[]models.Snippet
 }
 
+// initialize the templateData struct with a current year
+func newTemplateData() *templateData {
+	return &templateData{
+		CurrentYear: time.Now().Year(),
+	}
+}
 func newTemplateCache() (map[string]*template.Template, error) {
 	cache := map[string]*template.Template{}
 
