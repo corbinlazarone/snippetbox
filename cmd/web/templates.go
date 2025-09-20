@@ -22,6 +22,20 @@ func newTemplateData() *templateData {
 		CurrentYear: time.Now().Year(),
 	}
 }
+
+// NOTE: Custome template function like the one below can only
+// return one value, unless of course you return a value and an
+// error.
+
+// returns a formatted date
+func humanReadableDate(t time.Time) string {
+	return t.Format("02 Jan 2006 at 15:04")
+}
+
+var functions = template.FuncMap{
+	"humanDate": humanReadableDate,
+}
+
 func newTemplateCache() (map[string]*template.Template, error) {
 	cache := map[string]*template.Template{}
 
@@ -36,8 +50,12 @@ func newTemplateCache() (map[string]*template.Template, error) {
 		// name will be the last element of the path ex: home.tmpl.html
 		name := filepath.Base(page)
 
+		// NOTE: Customer template functions must be registerd before the template is parsed.
+		// This means we have to create a empty template set using template.New() to register the
+		// template.FuncMap and then parse the file.
+
 		// parse our base template file
-		tmplSet, err := template.ParseFiles("./ui/html/base.tmpl.html")
+		tmplSet, err := template.New(name).Funcs(functions).ParseFiles("./ui/html/base.tmpl.html")
 		if err != nil {
 			return nil, err
 		}
