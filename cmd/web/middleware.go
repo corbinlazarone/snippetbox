@@ -1,6 +1,9 @@
 package main
 
-import "net/http"
+import (
+	"fmt"
+	"net/http"
+)
 
 // Add secure headers to all incoming requests
 func secureHeaders(next http.Handler) http.Handler {
@@ -25,6 +28,31 @@ func secureHeaders(next http.Handler) http.Handler {
 func (app *application) logRequest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		app.infoLog.Printf("%s - %s %s %s", r.RemoteAddr, r.Proto, r.Method, r.URL.RequestURI())
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+// NOTE: Each http request is handler in its on goroutine, so when a pancic occurs in
+// a request it will crash that request and not the whole server. -- that is cool
+
+// NOTE: any extra goroutine you add to a request to do some other background processing,
+// you will have to do your own panic recover, because as stated above the middleware below
+// only handles the request goroutine.
+
+// Show 500 internal server error to user on request panics
+func (app *application) recoverFromPanic(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// defered function that will alwasy run in the event of a panic as Go unwinds
+		// the stack.
+		defer func() {
+			if err := recover(); err != nil {
+				w.Header().Set("Connetion", "close")
+
+				// show a 500 server error to the user
+				app.serverError(w, fmt.Errorf("%s", err))
+			}
+		}()
 
 		next.ServeHTTP(w, r)
 	})
