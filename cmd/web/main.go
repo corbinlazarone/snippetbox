@@ -45,7 +45,7 @@ func main() {
 		errLog.Fatal(err)
 	}
 
-	defer db.Close()
+	defer db.Close() // make sure the db connection is closed right after opening it.
 
 	app := &application{
 		errLog:  errLog,
