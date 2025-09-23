@@ -10,6 +10,11 @@ import (
 func (app *application) routes() http.Handler {
 	router := httprouter.New()
 
+	// custom wrapper to make httprouter use our client error helper function
+	router.NotFound = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		app.clientError(w, http.StatusNotFound)
+	})
+
 	// route for static files
 	fileServer := http.FileServer(http.Dir("./ui/static"))
 	router.Handler(http.MethodGet, "/static/*filepath", http.StripPrefix("/static", fileServer))
