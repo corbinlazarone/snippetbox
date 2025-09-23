@@ -8,15 +8,10 @@ import (
 	"strings"
 
 	"github.com/corbinlazarone/snippetbox/internal/models"
+	"github.com/julienschmidt/httprouter"
 )
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
-	// only show home on / path
-	if r.URL.Path != "/" {
-		app.clientError(w, http.StatusNotFound)
-		return
-	}
-
 	snippets, err := app.snippets.Latest()
 	if err != nil {
 		app.serverError(w, err)
@@ -24,7 +19,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// use our templateData holding struct
-	data := newTemplateData()
+	data := app.newTemplateData()
 	data.Snippets = &snippets
 
 	// use render helper function to render our template page
@@ -32,14 +27,14 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		w.Header().Set("Allow", http.MethodPost)
-		app.clientError(w, http.StatusMethodNotAllowed)
-		return
-	}
+	w.Write([]byte("Display the form for creating a new snippet..."))
+}
+
+func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request) {
 	title := "O snail"
 	content := "O snail\nClimb Mount Fuji,\nBut slowly, slowly!\n\n– Kobayashi Issa"
 	expires := 7
+
 	id, err := app.snippets.Insert(title, content, expires)
 	if err != nil {
 		app.serverError(w, err)
@@ -47,11 +42,16 @@ func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// redirect the user to the relvant snippet id page
-	http.Redirect(w, r, fmt.Sprintf("/snippet/view?id=%d\n", id), http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("/snippet/view/%d", id), http.StatusSeeOther)
 }
 
 func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	// when httprouter is parsing a request, the values of any named parameters
+	// will be stored in the request context. We can use the ParamsFromContext()
+	// function to retrive the slice containing these parameter names and values.
+	params := httprouter.ParamsFromContext(r.Context())
+
+	id, err := strconv.Atoi(params.ByName("id"))
 	if err != nil || id < 1 { // convert id to int and makes sure its greater than 1
 		app.clientError(w, http.StatusNotFound)
 		return
@@ -70,7 +70,7 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	snippet.Content = strings.ReplaceAll(snippet.Content, "\\n", "\n")
 
 	// use our templateData holding struct
-	data := newTemplateData()
+	data := app.newTemplateData()
 	data.Snippet = snippet
 
 	app.render(w, "view.tmpl.html", data, http.StatusOK)

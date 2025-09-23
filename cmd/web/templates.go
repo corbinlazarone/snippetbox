@@ -17,7 +17,7 @@ type templateData struct {
 }
 
 // initialize the templateData struct with a current year
-func newTemplateData() *templateData {
+func (app *application) newTemplateData() *templateData {
 	return &templateData{
 		CurrentYear: time.Now().Year(),
 	}
