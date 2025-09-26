@@ -26,14 +26,31 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	app.render(w, "home.tmpl.html", data, http.StatusOK)
 }
 
+// renders the html for our snippet create form
 func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Display the form for creating a new snippet..."))
+	data := app.newTemplateData()
+	app.render(w, "create.tmpl.html", data, http.StatusOK)
 }
 
+// creates the submitted snippet to the database
 func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request) {
-	title := "O snail"
-	content := "O snail\nClimb Mount Fuji,\nBut slowly, slowly!\n\n– Kobayashi Issa"
-	expires := 7
+
+	// Chapter 8.2 - parsing the form
+
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	title := r.PostForm.Get("title")
+	content := r.PostForm.Get("content")
+
+	expires, err := strconv.Atoi(r.PostForm.Get("expires"))
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
 
 	id, err := app.snippets.Insert(title, content, expires)
 	if err != nil {
