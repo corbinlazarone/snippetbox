@@ -37,6 +37,9 @@ var functions = template.FuncMap{
 	"humanDate": humanReadableDate,
 }
 
+// newTemplateCache() parses all our html pages when the app starts
+// and stores them in map (cache) so we can refrence them in our app, instead
+// of parsing and reading the template html page everytime the user goes to a new page.
 func newTemplateCache() (map[string]*template.Template, error) {
 	cache := map[string]*template.Template{}
 

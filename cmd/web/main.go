@@ -9,16 +9,18 @@ import (
 	"os"
 
 	"github.com/corbinlazarone/snippetbox/internal/models"
+	"github.com/go-playground/form/v4"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // Struct to hold our resources that needs to be
 // shared across our app.
 type application struct {
-	errLog        *log.Logger          // field to introduce a custom error logger
-	infoLog       *log.Logger          // field to introduce a custom info logger
-	snippets      *models.SnippetModel // used so our handlers.go can see out model
-	templateCache map[string]*template.Template
+	errLog        *log.Logger                   // field to introduce a custom error logger
+	infoLog       *log.Logger                   // field to introduce a custom info logger
+	snippets      *models.SnippetModel          // used so our handlers.go can see our model
+	templateCache map[string]*template.Template // holds our cached templates
+	formDecoder   *form.Decoder                 // used so our handerls.go can auto parse forms
 }
 
 func main() {
@@ -47,6 +49,9 @@ func main() {
 
 	defer db.Close() // make sure the db connection is closed right after opening it.
 
+	// Initialze a new decoder instance.
+	formDecoder := form.NewDecoder()
+
 	app := &application{
 		errLog:  errLog,
 		infoLog: infoLog,
@@ -54,6 +59,7 @@ func main() {
 			DB: db,
 		},
 		templateCache: templateCache,
+		formDecoder:   formDecoder,
 	}
 
 	srv := &http.Server{

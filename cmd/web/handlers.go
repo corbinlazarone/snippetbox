@@ -14,11 +14,16 @@ import (
 
 // NOTE: Struct field must be public in order to be read by
 // the html/template package when rendering the template.
+
+// NOTE: the struct tags tells the decoder how to map HTML form values into
+// different struct fields. For example, here we are telling the decoder to
+// store the value from the HTML form input with the name "title" in the Title
+// field.
 type snippetCreateForm struct {
-	Title   string
-	Content string
-	Expires int
-	validator.Validator
+	Title               string     `form:"title"`
+	Content             string     `form:"content"`
+	Expires             int        `form:"expires"`
+	validator.Validator `form:"-"` // tells the from decoder to ignore this field
 }
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
@@ -53,25 +58,15 @@ func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
 
 // creates the submitted snippet to the database
 func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request) {
+	var form snippetCreateForm
 
-	// Chapter 8.2 - parsing the form
-
-	err := r.ParseForm()
+	// we pass a pointer to our form to the Decoder and the request and
+	// it will fill out our struct that holds the form values with the values
+	// from the HTML form.
+	err := app.decodePostForm(r, &form)
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
 		return
-	}
-
-	expires, err := strconv.Atoi(r.PostForm.Get("expires"))
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-
-	form := snippetCreateForm{
-		Title:   r.PostForm.Get("title"),
-		Content: r.PostForm.Get("content"),
-		Expires: expires,
 	}
 
 	// Check that the title field is not blank.
