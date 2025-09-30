@@ -11,6 +11,8 @@ require (
 )
 
 require (
+	github.com/alexedwards/scs/pgxstore v0.0.0-20250927115722-fb8d6f122cfb // indirect
+	github.com/alexedwards/scs/v2 v2.9.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
