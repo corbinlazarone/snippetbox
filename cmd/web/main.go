@@ -7,7 +7,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
+	"github.com/alexedwards/scs/pgxstore"
+	"github.com/alexedwards/scs/v2"
 	"github.com/corbinlazarone/snippetbox/internal/models"
 	"github.com/go-playground/form/v4"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -16,11 +19,12 @@ import (
 // Struct to hold our resources that needs to be
 // shared across our app.
 type application struct {
-	errLog        *log.Logger                   // field to introduce a custom error logger
-	infoLog       *log.Logger                   // field to introduce a custom info logger
-	snippets      *models.SnippetModel          // used so our handlers.go can see our model
-	templateCache map[string]*template.Template // holds our cached templates
-	formDecoder   *form.Decoder                 // used so our handerls.go can auto parse forms
+	errLog         *log.Logger                   // field to introduce a custom error logger
+	infoLog        *log.Logger                   // field to introduce a custom info logger
+	snippets       *models.SnippetModel          // used so our handlers.go can see our model
+	templateCache  map[string]*template.Template // holds our cached templates
+	formDecoder    *form.Decoder                 // used so our handerls.go can auto parse forms
+	sessionManager *scs.SessionManager
 }
 
 func main() {
@@ -52,14 +56,21 @@ func main() {
 	// Initialze a new decoder instance.
 	formDecoder := form.NewDecoder()
 
+	// Initialize a new session manager with scs.New(), then configured it to use our Postgresql database
+	// as the session store, and set a lifetime of 12 hours.
+	sessionManager := scs.New()
+	sessionManager.Store = pgxstore.New(db)
+	sessionManager.Lifetime = 12 * time.Hour
+
 	app := &application{
 		errLog:  errLog,
 		infoLog: infoLog,
 		snippets: &models.SnippetModel{
 			DB: db,
 		},
-		templateCache: templateCache,
-		formDecoder:   formDecoder,
+		templateCache:  templateCache,
+		formDecoder:    formDecoder,
+		sessionManager: sessionManager,
 	}
 
 	srv := &http.Server{
