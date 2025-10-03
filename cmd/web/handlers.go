@@ -97,6 +97,10 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// Use the Put() method to add a string value and the corresponding key to
+	// session data.
+	app.sessionManager.Put(r.Context(), "flash", "Snippet created successfully created!")
+
 	// redirect the user to the relvant snippet id page
 	http.Redirect(w, r, fmt.Sprintf("/snippet/view/%d", id), http.StatusSeeOther)
 }
@@ -112,6 +116,7 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 		app.clientError(w, http.StatusNotFound)
 		return
 	}
+
 	snippet, err := app.snippets.Get(id)
 	if err != nil {
 		if errors.Is(err, models.ErrNoRecord) {
@@ -125,9 +130,18 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	// fix new lines
 	snippet.Content = strings.ReplaceAll(snippet.Content, "\\n", "\n")
 
+	// Use the PopString() method to retrieve the value form the "flash" key.
+	// PopString() also deletes the key and value from the session data, so it
+	// acts like a one-time fetch. If there is no matching key in the session
+	// data this will return the empty string.
+	flash := app.sessionManager.PopString(r.Context(), "flash")
+
 	// use our templateData holding struct
 	data := app.newTemplateData()
 	data.Snippet = snippet
+
+	// add falsh to our templateData holding struct
+	data.Flash = flash
 
 	app.render(w, "view.tmpl.html", data, http.StatusOK)
 }
