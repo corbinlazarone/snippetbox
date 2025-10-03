@@ -34,7 +34,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// use our templateData holding struct
-	data := app.newTemplateData()
+	data := app.newTemplateData(r)
 	data.Snippets = &snippets
 
 	// use render helper function to render our template page
@@ -43,7 +43,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 
 // renders the html for our snippet create form
 func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
-	data := app.newTemplateData()
+	data := app.newTemplateData(r)
 
 	// Initialize a new createSnippetForm instance and pass it to the template.
 	// Notice how this is also a great opportunity to set any default or
@@ -85,7 +85,7 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 	// If any errors in our map than re render the create.tmpl.html page
 	// with a 422 status code error.
 	if !form.Valid() {
-		data := app.newTemplateData()
+		data := app.newTemplateData(r)
 		data.Form = form
 		app.render(w, "create.tmpl.html", data, http.StatusUnprocessableEntity)
 		return
@@ -130,18 +130,9 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	// fix new lines
 	snippet.Content = strings.ReplaceAll(snippet.Content, "\\n", "\n")
 
-	// Use the PopString() method to retrieve the value form the "flash" key.
-	// PopString() also deletes the key and value from the session data, so it
-	// acts like a one-time fetch. If there is no matching key in the session
-	// data this will return the empty string.
-	flash := app.sessionManager.PopString(r.Context(), "flash")
-
 	// use our templateData holding struct
-	data := app.newTemplateData()
+	data := app.newTemplateData(r)
 	data.Snippet = snippet
-
-	// add falsh to our templateData holding struct
-	data.Flash = flash
 
 	app.render(w, "view.tmpl.html", data, http.StatusOK)
 }

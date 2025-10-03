@@ -2,6 +2,7 @@ package main
 
 import (
 	"html/template"
+	"net/http"
 	"path/filepath"
 	"time"
 
@@ -19,9 +20,12 @@ type templateData struct {
 }
 
 // initialize the templateData struct with a current year
-func (app *application) newTemplateData() *templateData {
+func (app *application) newTemplateData(r *http.Request) *templateData {
 	return &templateData{
 		CurrentYear: time.Now().Year(),
+
+		// add flash message to template data if it exists
+		Flash: app.sessionManager.PopString(r.Context(), "flash"),
 	}
 }
 
