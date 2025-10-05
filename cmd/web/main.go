@@ -88,10 +88,13 @@ func main() {
 	}
 
 	srv := &http.Server{
-		Addr:      *port,
-		Handler:   app.routes(),
-		ErrorLog:  errLog,
-		TLSConfig: tlsConfig,
+		Addr:         *port,
+		Handler:      app.routes(),
+		ErrorLog:     errLog,
+		TLSConfig:    tlsConfig,
+		IdleTimeout:  time.Minute,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
 	}
 
 	infoLog.Printf("Server running on %s...\n", *port)
