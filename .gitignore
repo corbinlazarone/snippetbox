@@ -1,1 +1,5 @@
+# envrionment variables
 .env
+
+# tls certs
+tls/

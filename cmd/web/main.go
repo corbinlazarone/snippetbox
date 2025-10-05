@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"flag"
 	"html/template"
 	"log"
@@ -62,6 +63,11 @@ func main() {
 	sessionManager.Store = pgxstore.New(db)
 	sessionManager.Lifetime = 12 * time.Hour
 
+	// Cookie will only be sent by a user's web browser when a
+	// HTTPS connection is being used. (Will not be send over
+	// and HTTP connection).
+	sessionManager.Cookie.Secure = true
+
 	app := &application{
 		errLog:  errLog,
 		infoLog: infoLog,
@@ -73,14 +79,23 @@ func main() {
 		sessionManager: sessionManager,
 	}
 
+	// Initialize a tls.Config struct to hold the non-default TLS settings we
+	// want the server to use. In this case the only thing that we're changing
+	// is the curve preferences value, so that only elliptic curves with
+	// assembly implementations are used.
+	tlsConfig := &tls.Config{
+		CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP256},
+	}
+
 	srv := &http.Server{
-		Addr:     *port,
-		Handler:  app.routes(),
-		ErrorLog: errLog,
+		Addr:      *port,
+		Handler:   app.routes(),
+		ErrorLog:  errLog,
+		TLSConfig: tlsConfig,
 	}
 
 	infoLog.Printf("Server running on %s...\n", *port)
-	err = srv.ListenAndServe()
+	err = srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
 	errLog.Fatal(err)
 }
 
