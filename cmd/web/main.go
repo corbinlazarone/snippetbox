@@ -26,6 +26,7 @@ type application struct {
 	templateCache  map[string]*template.Template // holds our cached templates
 	formDecoder    *form.Decoder                 // used so our handerls.go can auto parse forms
 	sessionManager *scs.SessionManager
+	users          *models.UserModel
 }
 
 func main() {
@@ -77,6 +78,9 @@ func main() {
 		templateCache:  templateCache,
 		formDecoder:    formDecoder,
 		sessionManager: sessionManager,
+		users: &models.UserModel{
+			DB: db,
+		},
 	}
 
 	// Initialize a tls.Config struct to hold the non-default TLS settings we
