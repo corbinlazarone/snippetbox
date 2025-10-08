@@ -26,6 +26,13 @@ type snippetCreateForm struct {
 	validator.Validator `form:"-"` // tells the from decoder to ignore this field
 }
 
+type userSignUpForm struct {
+	Name                string     `form:"name"`
+	Email               string     `form:"email"`
+	Password            string     `form:"password"`
+	validator.Validator `form:"-"` // tells the from decoder to ignore this field
+}
+
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	snippets, err := app.snippets.Latest()
 	if err != nil {
@@ -137,12 +144,49 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	app.render(w, "view.tmpl.html", data, http.StatusOK)
 }
 
+// userSignUp() renders the user sign up html form.
 func (app *application) userSignUp(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Display a html form for signing up a new user...")
+	data := app.newTemplateData(r)
+	data.Form = userSignUpForm{}
+
+	app.render(w, "signup.tmpl.html", data, http.StatusOK)
 }
 
 func (app *application) userSignUpPost(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Create a new user...")
+	var form userSignUpForm
+
+	err := app.decodePostForm(r, &form)
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	// Check if name field is not blank
+	form.CheckField(validator.NotBlank(form.Name), "name", "This field can not be blank")
+
+	// Check if email field is not blank
+	form.CheckField(validator.NotBlank(form.Email), "email", "This field can not be blank")
+
+	// Check if email field is correct email format
+	form.CheckField(validator.Matches(form.Email, validator.EmailRX), "email", "This field must be a valid email address")
+
+	// Check if password is not blank
+	form.CheckField(validator.NotBlank(form.Password), "password", "This field can not be blank")
+
+	// Check if password is at least 8 characters long
+	form.CheckField(validator.MinChars(form.Password, 8), "password", "This field must be at least 8 characters long")
+
+	// If an errors in our map than re render the signup.tmpl.html page
+	// with a 422 status code error.
+	if !form.Valid() {
+		data := app.newTemplateData(r)
+		data.Form = form
+		app.render(w, "signup.tmpl.html", data, http.StatusUnprocessableEntity)
+		return
+	}
+
+	// after show just default message for now
+	fmt.Fprintln(w, "User created successfully...")
 }
 
 func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
