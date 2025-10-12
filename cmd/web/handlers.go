@@ -152,6 +152,8 @@ func (app *application) userSignUp(w http.ResponseWriter, r *http.Request) {
 	app.render(w, "signup.tmpl.html", data, http.StatusOK)
 }
 
+// userSignUpPost() handles the user sign up post request and validates the form data and
+// creates a new user in the database.
 func (app *application) userSignUpPost(w http.ResponseWriter, r *http.Request) {
 	var form userSignUpForm
 
@@ -185,8 +187,25 @@ func (app *application) userSignUpPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// after show just default message for now
-	fmt.Fprintln(w, "User created successfully...")
+	err = app.users.Insert(form.Name, form.Email, form.Password)
+	if err != nil {
+		// check for duplicate email error
+		if errors.Is(err, models.ErrDuplicateEmail) {
+			// add form error
+			form.AddFieldError("email", "Email address is already in use")
+
+			// re render the signup page with the new field error
+			data := app.newTemplateData(r)
+			data.Form = form
+			app.render(w, "signup.tmpl.html", data, http.StatusUnprocessableEntity)
+		}
+	}
+
+	app.sessionManager.Put(r.Context(), "flash", "Your signup was successful. Please log in.")
+
+	// redirect the user to the login page
+	http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+
 }
 
 func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {

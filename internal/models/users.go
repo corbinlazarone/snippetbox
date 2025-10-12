@@ -1,8 +1,12 @@
 package models
 
 import (
+	"context"
+	"errors"
+	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -23,8 +27,31 @@ type UserModel struct {
 
 // create a new user record in the db
 func (u *UserModel) Insert(name, email, password string) error {
-	_, err := bcrypt.GenerateFromPassword([]byte(password), 12)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 	if err != nil {
+		return err
+	}
+
+	statement := `INSERT INTO users (name, email, hashed_password, created) VALUES ($1, $2, $3, NOW() AT TIME ZONE 'UTC');`
+
+	args := []any{
+		name,
+		email,
+		hashedPassword,
+	}
+
+	_, err = u.DB.Exec(context.Background(), statement, args...)
+	if err != nil {
+		var postgreqlError *pgconn.PgError
+
+		if errors.As(err, &postgreqlError) {
+			// if error is code 23505 then we have duplicate email so return
+			// our ErrDuplicateEmail error defined in errors.go.
+			if postgreqlError.Code == "23505" && strings.Contains(postgreqlError.Message, "users_uc_email") {
+				return ErrDuplicateEmail
+			}
+		}
+
 		return err
 	}
 
