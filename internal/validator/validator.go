@@ -8,12 +8,13 @@ import (
 
 // Validator struct that contains a map to hold our form validation errors.
 type Validator struct {
-	FieldErrors map[string]string
+	NonFieldErrors []string
+	FieldErrors    map[string]string
 }
 
 // Valid() returns true if the FieldErrors map doesn't contain any entries.
 func (v *Validator) Valid() bool {
-	return len(v.FieldErrors) == 0
+	return len(v.FieldErrors) == 0 && len(v.NonFieldErrors) == 0
 }
 
 // AddFieldError() adds an error message to the FieldErrors map (so long as
@@ -28,6 +29,11 @@ func (v *Validator) AddFieldError(key, message string) {
 	if !exists {
 		v.FieldErrors[key] = message
 	}
+}
+
+// AddNonFieldErrors() helper to add error message to the NonFieldErrors slice.
+func (v *Validator) AddNonFieldErros(message string) {
+	v.NonFieldErrors = append(v.NonFieldErrors, message)
 }
 
 // CheckField() adds an error message to the FieldErrors map only if a

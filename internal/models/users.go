@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
@@ -61,7 +62,31 @@ func (u *UserModel) Insert(name, email, password string) error {
 // Verifys whether a user exists with the provided email and password.
 // This will return the relevant user ID if they do.
 func (u *UserModel) Authenticate(email, password string) (int, error) {
-	return 0, nil
+
+	// Check if user exists
+	var id int
+	var hashedPassword []byte
+	statement := "select id, hashed_password from users where email = $1"
+	err := u.DB.QueryRow(context.Background(), statement, email).Scan(&id, &hashedPassword)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return 0, ErrInvalidCredentials
+		} else {
+			return 0, err
+		}
+	}
+
+	// Check if the password match the stored hashed password
+	err = bcrypt.CompareHashAndPassword(hashedPassword, []byte(password))
+	if err != nil {
+		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			return 0, ErrInvalidCredentials
+		} else {
+			return 0, err
+		}
+	}
+
+	return id, nil
 }
 
 // Used to check if a user exists with a specific ID
