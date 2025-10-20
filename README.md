@@ -1,6 +1,6 @@
 # Snippet Box
 
-A server-side rendered web application built in Go, following [*Let's Go* by Alex Edwards](https://lets-go.alexedwards.net/). Snippet Box allows users to create, store, and share code snippets with a clean, user-friendly interface.
+A server-side rendered web application built in Go, following [*Let's Go* by Alex Edwards](https://lets-go.alexedwards.net/). Snippet Box allows users to create, store, and share snippets of text with a clean, user-friendly interface.
 
 ## Prerequisites
 
