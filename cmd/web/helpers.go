@@ -10,6 +10,11 @@ import (
 	"github.com/go-playground/form/v4"
 )
 
+// Return true if the current request is from an authenticated user, otherwise return false.
+func (app *application) isAuthenticated(r *http.Request) bool {
+	return app.sessionManager.Exists(r.Context(), "authenticatedUserID")
+}
+
 // The second parameter here, destination, is the target destination that we want
 // to decode the form data into.
 func (app *application) decodePostForm(r *http.Request, destination any) error {

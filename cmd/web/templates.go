@@ -12,11 +12,12 @@ import (
 // templateData will act as a holding structure for
 // any dynamic data we want to pass to our html templates.
 type templateData struct {
-	CurrentYear int
-	Snippet     *models.Snippet
-	Snippets    *[]models.Snippet
-	Form        any
-	Flash       string
+	CurrentYear     int
+	Snippet         *models.Snippet
+	Snippets        *[]models.Snippet
+	Form            any
+	Flash           string
+	IsAuthenticated bool
 }
 
 // initialize the templateData struct with a current year
@@ -26,6 +27,9 @@ func (app *application) newTemplateData(r *http.Request) *templateData {
 
 		// add flash message to template data if it exists
 		Flash: app.sessionManager.PopString(r.Context(), "flash"),
+
+		// add the authentication status to the template data.
+		IsAuthenticated: app.isAuthenticated(r),
 	}
 }
 

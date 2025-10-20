@@ -23,18 +23,19 @@ func (app *application) routes() http.Handler {
 	// HTTP request and response.
 	dynamic := alice.New(app.sessionManager.LoadAndSave)
 
-	// all other routes
 	router.Handler(http.MethodGet, "/", dynamic.ThenFunc(app.home))
 	router.Handler(http.MethodGet, "/snippet/view/:id", dynamic.ThenFunc(app.snippetView))
-	router.Handler(http.MethodGet, "/snippet/create", dynamic.ThenFunc(app.snippetCreate))
-	router.Handler(http.MethodPost, "/snippet/create", dynamic.ThenFunc(app.snippetCreatePost))
-
-	// user routes
 	router.Handler(http.MethodGet, "/user/signup", dynamic.ThenFunc(app.userSignUp))
 	router.Handler(http.MethodPost, "/user/signup", dynamic.ThenFunc(app.userSignUpPost))
 	router.Handler(http.MethodGet, "/user/login", dynamic.ThenFunc(app.userLogin))
 	router.Handler(http.MethodPost, "/user/login", dynamic.ThenFunc(app.userLoginPost))
-	router.Handler(http.MethodPost, "/user/logout", dynamic.ThenFunc(app.userLogoutPost))
+
+	// Protected (authenticated-only) application routes.
+	protected := dynamic.Append(app.requireAuthentication)
+
+	router.Handler(http.MethodGet, "/snippet/create", protected.ThenFunc(app.snippetCreate))
+	router.Handler(http.MethodPost, "/snippet/create", protected.ThenFunc(app.snippetCreatePost))
+	router.Handler(http.MethodPost, "/user/logout", protected.ThenFunc(app.userLogoutPost))
 
 	// our standard middleware that we want to run on every request
 	standard := alice.New(app.recoverFromPanic, app.logRequest, secureHeaders)
