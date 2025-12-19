@@ -72,3 +72,8 @@ Open `http://localhost:4000` (or your custom port) in your browser.
 ## Security Note
 
 Avoid using the `postgres` user in production. Use a dedicated user with limited permissions, as shown in step 7.
+
+## Demo Video
+https://github.com/user-attachments/assets/eec17184-703b-49dd-9264-21a5c5171f69
+
+
