@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	"flag"
 	"html/template"
 	"log"
@@ -87,22 +86,22 @@ func main() {
 	// want the server to use. In this case the only thing that we're changing
 	// is the curve preferences value, so that only elliptic curves with
 	// assembly implementations are used.
-	tlsConfig := &tls.Config{
-		CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP256},
-	}
+	// tlsConfig := &tls.Config{
+	// 	CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP256},
+	// }
 
 	srv := &http.Server{
-		Addr:         *port,
-		Handler:      app.routes(),
-		ErrorLog:     errLog,
-		TLSConfig:    tlsConfig,
+		Addr:     *port,
+		Handler:  app.routes(),
+		ErrorLog: errLog,
+		// TLSConfig:    tlsConfig,
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
 
 	infoLog.Printf("Server running on %s...\n", *port)
-	err = srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
+	err = srv.ListenAndServe()
 	errLog.Fatal(err)
 }
 
